@@ -98,13 +98,6 @@ end''')
 				shutit.pause_point("machine: " + machine + " appears not to have come up cleanly")
 			shutit_session.login(command='vagrant ssh ' + machine)
 			shutit_session.login(command='sudo su - ')
-			shutit.install('ifupdown')
-			shutit_session.logout()
-			shutit_session.logout()
-			shutit_session.send('vagrant halt')
-			shutit_session.send('vagrant up')
-			shutit_session.login(command='vagrant ssh ' + machine)
-			shutit_session.login(command='sudo su - ')
 			# Correct /etc/hosts
 			shutit_session.send(r'''cat <(echo -n $(ip -4 -o addr show scope global | grep -v 10.0.2.15 | head -1 | awk '{print $4}' | sed 's/\(.*\)\/.*/\1/') $(hostname)) <(cat /etc/hosts | grep -v $(hostname -s)) > /tmp/hosts && mv -f /tmp/hosts /etc/hosts''')
 			# Correct any broken ip addresses.
@@ -123,8 +116,6 @@ end''')
 		for machine in sorted(machines.keys()):
 			ip = shutit.send_and_get_output('''vagrant landrush ls 2> /dev/null | grep -w ^''' + machines[machine]['fqdn'] + ''' | awk '{print $2}' ''')
 			machines.get(machine).update({'ip':ip})
-
-
 
 		for machine in sorted(machines.keys()):
 			shutit_session = shutit_sessions[machine]
@@ -145,6 +136,11 @@ echo "
 
 		for machine in sorted(machines.keys()):
 			shutit_session = shutit_sessions[machine]
+			shutit_session.logout()
+			shutit_session.multisend('sudo DEBIAN_FRONTEND=noninteractive do-release-upgrade -d',{'yN':'y','ENTER':'','keep the local':''},expect='ORIGIN_ENV')
+			shutit_session.logout('ls')
+			shutit_session.login(command='vagrant ssh ' + machine)
+			shutit_session.login(command='sudo su - ')
 			shutit_session.install('git')
 			shutit_session.send('add-apt-repository -y ppa:gophers/archive')
 			shutit_session.send('apt-get update -y')
@@ -158,7 +154,6 @@ echo "
 			shutit_session.send('go get github.com/GoogleContainerTools/kaniko/cmd/executor')
 			shutit_session.send('make')
 			shutit_session.multisend('adduser user',{'new UNIX password':'user','[]':''})
-			shutit_session.login(user='user')
 			shutit_session.pause_point('')
 
 
@@ -178,7 +173,7 @@ cd ''' + shutit.build['vagrant_run_dir'] + ''' && vagrant status && vagrant land
 
 
 	def get_config(self, shutit):
-		shutit.get_config(self.module_id,'vagrant_image',default='ubuntu/bionic64')
+		shutit.get_config(self.module_id,'vagrant_image',default='ubuntu/xenial64')
 		shutit.get_config(self.module_id,'vagrant_provider',default='virtualbox')
 		shutit.get_config(self.module_id,'gui',default='false')
 		shutit.get_config(self.module_id,'memory',default='1024')
