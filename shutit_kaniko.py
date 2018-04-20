@@ -141,7 +141,7 @@ echo "
 			shutit_session.send('shutdown')
 			shutit_session.logout()
 			shutit_session.logout()
-			shutit_session('sleep 120')
+			shutit_session.send('sleep 120')
 			shutit_session.login(command='vagrant ssh ' + machine)
 			shutit_session.login(command='sudo su - ')
 			shutit_session.install('git')
