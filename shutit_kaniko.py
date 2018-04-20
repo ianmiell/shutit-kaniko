@@ -136,9 +136,12 @@ echo "
 
 		for machine in sorted(machines.keys()):
 			shutit_session = shutit_sessions[machine]
+			shutit_session.multisend('sudo DEBIAN_FRONTEND=noninteractive do-release-upgrade -d',{'estart is required':'N','yN':'y','ENTER':'','keep the local':''},expect='ommand terminated normally')
+			shutit_session.send('x')
+			shutit_session.send('shutdown')
 			shutit_session.logout()
-			shutit_session.multisend('sudo DEBIAN_FRONTEND=noninteractive do-release-upgrade -d',{'yN':'y','ENTER':'','keep the local':''},expect='ORIGIN_ENV')
-			shutit_session.logout('ls')
+			shutit_session.logout()
+			shutit_session('sleep 120')
 			shutit_session.login(command='vagrant ssh ' + machine)
 			shutit_session.login(command='sudo su - ')
 			shutit_session.install('git')
